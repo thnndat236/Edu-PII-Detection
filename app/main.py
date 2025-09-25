@@ -4,11 +4,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from transformers import pipeline
 from api.routes import api_router
+import logging
 
+
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Startup: Loading NER pipeline...")
+    logger.info("Startup: Loading NER pipeline...")
     ner_pipeline = pipeline(
         "ner",
         model=settings.MODEL_REPO_ID, 
@@ -16,11 +19,11 @@ async def lifespan(app: FastAPI):
         aggregation_strategy="first" 
     )
     app.state.ner_pipeline = ner_pipeline
-    print("NER pipeline loaded")
+    logger.info("NER pipeline loaded")
 
     yield
 
-    print("Cleaning up resources...")
+    logger.info("Cleaning up resources...")
 
 
 app = FastAPI(

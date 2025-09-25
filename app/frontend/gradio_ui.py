@@ -1,21 +1,22 @@
 import gradio as gr
 import requests
 import re
+import argparse
 
+def get_urls(base_url: str):
+    return {
+        "detect": f"{base_url}/api/detection/detect",
+        "mask": f"{base_url}/api/masking/mask"
+    }
 
-DETECT_URL = "http://localhost:8000/api/detection/detect"
-MASK_URL = "http://localhost:8000/api/masking/mask"
-
-def ner_via_api(text: str):
-    response = requests.post(DETECT_URL, json={"text": text})
+def ner_via_api(text: str, urls: dict):
+    response = requests.post(urls["detect"], json={"text": text})
     if response.status_code == 200:
-        data = response.json()
-        return data
-    else:
-        return {"text": text, "entities": []}
+        return response.json()
+    return {"text": text, "entities": []}
 
-def mask_with_html_highlight(text: str):
-    response = requests.post(MASK_URL, json={"text": text})
+def mask_with_html_highlight(text: str, urls: dict):
+    response = requests.post(urls["mask"], json={"text": text})
     if response.status_code == 200:
         data = response.json()
         masked_text = data.get("masked_text", text)
@@ -41,9 +42,8 @@ def mask_with_html_highlight(text: str):
         return highlighted_text
     else:
         return text
-    
 
-def main():
+def gradio_launch(urls: dict):
     with gr.Blocks(title="PII Detector") as demo:
         gr.Markdown("# 🕵️ Education PII Detector")
 
@@ -57,17 +57,13 @@ def main():
                     )
                     submit_btn = gr.Button("🔍 Detect PII", variant="primary")
                 with gr.Column():
-                    output_box = gr.HighlightedText(
-                        label="Detection Results",
-                    )
+                    output_box = gr.HighlightedText(label="Detection Results")
                     copy_detect_btn = gr.Button("📋 Copy")
 
-            submit_btn.click(ner_via_api, inputs=input_text, outputs=output_box)
+            submit_btn.click(lambda t: ner_via_api(t, urls), inputs=input_text, outputs=output_box)
             copy_detect_btn.click(
-                None,
-                inputs=output_box,
-                outputs=None,
-                js="(x) => {navigator.clipboard.writeText(JSON.stringify(x))}",
+                None, inputs=output_box, outputs=None,
+                js="(x) => navigator.clipboard.writeText(JSON.stringify(x))"
             )
 
         with gr.Tab("🎨 Mask PII"):
@@ -80,16 +76,13 @@ def main():
                     )
                     mask_btn = gr.Button("🎨 Mask", variant="primary")
                 with gr.Column():
-                    with gr.Group():
-                        gr.Markdown("### 🛡️ Masked Results")
-                        mask_output = gr.HTML(label=None)
-                        copy_mask_btn = gr.Button("📋 Copy", variant="secondary")
+                    gr.Markdown("### 🛡️ Masked Results")
+                    mask_output = gr.HTML()
+                    copy_mask_btn = gr.Button("📋 Copy", variant="secondary")
 
-            mask_btn.click(mask_with_html_highlight, inputs=mask_input, outputs=mask_output)
+            mask_btn.click(lambda t: mask_with_html_highlight(t, urls), inputs=mask_input, outputs=mask_output)
             copy_mask_btn.click(
-                None,
-                inputs=mask_output,
-                outputs=None,
+                None, inputs=mask_output, outputs=None,
                 js="""
                 (x) => {
                     const tmp = document.createElement('div');
@@ -99,8 +92,20 @@ def main():
                 }
                 """
             )
-            
+
     demo.launch()
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--url', 
+        type=str, 
+        default="http://localhost:30000", 
+        help="Base FastAPI URL"
+    )
+    args = parser.parse_args()
+    urls = get_urls(args.url)
+    gradio_launch(urls)
 
 if __name__ == "__main__":
     main()
