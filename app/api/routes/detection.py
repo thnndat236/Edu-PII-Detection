@@ -7,4 +7,4 @@ router = APIRouter()
 @router.post("/detect", response_model=DetectionResponse)
 def detect_text(request: Request, body: DetectRequest):
     service = ModelService(request)
-    return service.run_ner(body)
+    return service.detect_text(body)
