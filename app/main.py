@@ -5,13 +5,30 @@ from core.config import settings
 from transformers import pipeline
 from api.routes import api_router
 import logging
+from utils.tracer import setup_tracing, remove_tracing
 
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
 logger = logging.getLogger(__name__)
+
+global tracer
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Startup: Loading NER pipeline...")
+    global tracer
+
+    logger.info("Starting Education PII Detection API...")
+    
+    # Setup tracing on startup
+    logger.info("OpenTelemetry tracing configuring...")
+    tracer = setup_tracing()
+    logger.info("OpenTelemetry tracing configured successfully")
+
+    # Setup NER pipeline on startup
+    logger.info("Starting NER pipeline...")
     ner_pipeline = pipeline(
         "ner",
         model=settings.MODEL_REPO_ID, 
@@ -23,7 +40,10 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    # Shutdown
     logger.info("Cleaning up resources...")
+    remove_tracing()
+    print("Telemetry resources cleaned up")
 
 
 app = FastAPI(
