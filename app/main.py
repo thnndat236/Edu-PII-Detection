@@ -6,6 +6,7 @@ from transformers import pipeline
 from api.routes import api_router
 import logging
 from utils.tracer import setup_tracing, remove_tracing
+from prometheus_fastapi_instrumentator import Instrumentator
 
 
 logging.basicConfig(
@@ -26,6 +27,11 @@ async def lifespan(app: FastAPI):
     logger.info("OpenTelemetry tracing configuring...")
     tracer = setup_tracing()
     logger.info("OpenTelemetry tracing configured successfully")
+
+    # Expose metrics on startup
+    logger.info("Exposing metrics with Prometheus Fastapi Instrumentator...")
+    instrumentator.expose(app)
+    logger.info("Exposing metrics successfully")
 
     # Setup NER pipeline on startup
     logger.info("Starting NER pipeline...")
@@ -59,6 +65,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add Prometheus metrics endpoint
+instrumentator = Instrumentator(excluded_handlers=["/metrics"]).instrument(app)
 
 @app.get("/")
 def main():
