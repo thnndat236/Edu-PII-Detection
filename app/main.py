@@ -55,7 +55,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    lifespan=lifespan
+    lifespan=lifespan,
+    root_path="/api"
 )
 
 app.add_middleware(
@@ -73,4 +74,14 @@ instrumentator = Instrumentator(excluded_handlers=["/metrics"]).instrument(app)
 def main():
     return {"message": "Welcome to Education PII Detection"}
 
-app.include_router(api_router, prefix="/api")
+@app.get("/health")
+async def health_check():
+    global tracer
+    if tracer:
+        with tracer.start_as_current_span("health_check") as span:
+            span.set_attribute("health.status", "ok")
+            span.set_attribute("tracing", "enable")
+        return {"status": "healthy", "tracing": "enable"}
+    return {"status": "healthy", "tracing": "disable"}
+
+app.include_router(api_router)

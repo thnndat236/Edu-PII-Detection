@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 router = APIRouter()
 
-@router.get("/health")
+@router.get("/ner")
 async def health_check(request: Request):
     ready = hasattr(request.app.state, "ner_pipeline")
     return {

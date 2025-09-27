@@ -95,39 +95,6 @@ class ModelService:
                     detail=f"Internal error while running NER: {str(e)}"
                 )
 
-    # def mask_text(self, data: MaskRequest) -> MaskResponse:
-    #     try:
-    #         if not data.text.strip():
-    #             raise HTTPException(
-    #                 status_code=status.HTTP_400_BAD_REQUEST,
-    #                 detail="Input text cannot be empty"
-    #             )
-    #         entities = self.ner_pipeline(data.text)
-    #     except HTTPException as e:
-    #         raise e
-        
-    #     except Exception as e:
-    #         logger.exception(f"Masking failed in pipeline: {str(e)}")
-    #         raise HTTPException(
-    #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #             detail="Internal error while masking text"
-    #         )
-        
-
-    #     masked_text = data.text
-    #     for ent in sorted(entities, key=lambda x: x["start"], reverse=True):
-    #         label = ent.get("entity_group", ent.get("entity", "PII"))
-
-    #         prefix = "" if (ent["start"] > 0 and masked_text[ent["start"]-1].isspace()) else " "
-    #         suffix = "" if (ent["end"] < len(masked_text) and masked_text[ent["end"]].isspace()) else " "
-
-    #         replacement = f"{prefix}[{label}]{suffix}"
-    #         masked_text = masked_text[:ent["start"]] + replacement + masked_text[ent["end"]:]
-        
-    #     logger.info("Masking successful")
-    #     return MaskResponse(original_text=data.text, masked_text=masked_text)
-    
-
     def mask_text(self, data: MaskRequest) -> MaskResponse:
         with self.tracer.start_as_current_span("pii_masking") as span:
             start_time = time.process_time()
