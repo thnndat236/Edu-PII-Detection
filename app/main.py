@@ -6,6 +6,8 @@ from transformers import pipeline
 from api.routes import api_router
 import logging
 from utils.tracer import setup_tracing, remove_tracing
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 
 
@@ -85,3 +87,9 @@ async def health_check():
     return {"status": "healthy", "tracing": "disable"}
 
 app.include_router(api_router)
+
+# Auto-instrument FastAPI
+FastAPIInstrumentor.instrument_app(app)
+
+# Auto-instrument requests
+RequestsInstrumentor().instrument()
