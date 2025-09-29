@@ -1,0 +1,19 @@
+replicaCount: 1
+
+image:
+  repository: qdawwn/edu-pii-detection
+  tag: latest
+  pullPolicy: Always # ensure pull the latest image every time
+
+service:
+  type: ClusterIP
+  port: 30000
+
+ingress:
+  host: "pii.34.126.125.223.sslip.io"
+
+tracing:
+  jaegerCollectorEndpoint: "jaeger-collector.tracing.svc.cluster.local:4317"
+  jaegerCollectorInsecure: "True"
+  otelServiceName: "edu-pii-detection-service"
+  jaegerHostname: "edu-pii-detection-service"

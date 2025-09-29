@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-deployment
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.service.port }}"
+        prometheus.io/path: "/metrics"
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Release.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: JAEGER_COLLECTOR_ENDPOINT
+              value: {{ .Values.tracing.jaegerCollectorEndpoint | quote }}
+            - name: JAEGER_COLLECTOR_INSECURE
+              value: {{ .Values.tracing.jaegerCollectorInsecure | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ .Values.tracing.otelServiceName | quote }}
+            - name: JAEGER_HOSTNAME
+              value: {{ .Values.tracing.jaegerHostname | quote }}
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "1Gi"
+            limits:
+              cpu: "500m"
+              memory: "3Gi"

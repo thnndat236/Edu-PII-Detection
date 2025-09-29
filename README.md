@@ -108,5 +108,5 @@ python gradio_ui.py -h
 python gradio_ui.py --help
 
 # Run application on url 
-python gradio_ui.py --url pii.<EXTERNAL-IP>.sslip.io/
+python gradio_ui.py --url http://pii.<EXTERNAL-IP>.sslip.io/
 ```
