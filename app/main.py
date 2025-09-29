@@ -2,13 +2,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
-from transformers import pipeline
 from api.routes import api_router
 import logging
 from utils.tracer import setup_tracing, remove_tracing
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
+import torch
+from transformers import pipeline
 
 
 logging.basicConfig(
@@ -50,8 +51,13 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Cleaning up resources...")
+    # Release GPU
+    torch.cuda.empty_cache()
+    logger.info("NER pipeline cleaned up")
+    
+    # Uninstrument app
     remove_tracing()
-    print("Telemetry resources cleaned up")
+    logger.info("Telemetry resources cleaned up")
 
 
 app = FastAPI(
