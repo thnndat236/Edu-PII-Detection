@@ -34,8 +34,8 @@ class ModelService:
             self.ner_pipeline = request.app.state.ner_pipeline
             span.set_attribute("model.type", "pii_token_classification_pipeline")
             span.set_attribute("model.initialization.success", True)
-            span.set_attribute("model.config.id2label", self.ner_pipeline.model.config.id2label)
-            span.set_attribute("model.config.label2id", self.ner_pipeline.model.config.label2id)
+            span.set_attribute("model.config.id2label", str(self.ner_pipeline.model.config.id2label))
+            span.set_attribute("model.config.label2id", str(self.ner_pipeline.model.config.label2id))
 
     def detect_text(self, data: DetectRequest) -> DetectionResponse:
         with self.tracer.start_as_current_span("pii_detection") as span:
