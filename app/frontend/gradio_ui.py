@@ -5,8 +5,8 @@ import argparse
 
 def get_urls(base_url: str):
     return {
-        "detect": f"{base_url}/api/detection/detect",
-        "mask": f"{base_url}/api/masking/mask"
+        "detect": f"{base_url}/api/pii/detect",
+        "mask": f"{base_url}/api/pii/mask"
     }
 
 def ner_via_api(text: str, urls: dict):

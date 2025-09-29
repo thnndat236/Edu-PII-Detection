@@ -8,8 +8,7 @@ from utils.tracer import setup_tracing, remove_tracing
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
-import torch
-from transformers import pipeline
+import torch, gc
 
 
 logging.basicConfig(
@@ -36,23 +35,15 @@ async def lifespan(app: FastAPI):
     instrumentator.expose(app)
     logger.info("Exposing metrics successfully")
 
-    # Setup NER pipeline on startup
-    logger.info("Starting NER pipeline...")
-    ner_pipeline = pipeline(
-        "ner",
-        model=settings.MODEL_REPO_ID, 
-        tokenizer=settings.MODEL_REPO_ID,
-        aggregation_strategy="first" 
-    )
-    app.state.ner_pipeline = ner_pipeline
-    logger.info("NER pipeline loaded")
-
     yield
 
     # Shutdown
     logger.info("Cleaning up resources...")
+    
     # Release GPU
+    gc.collect()
     torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
     logger.info("NER pipeline cleaned up")
     
     # Uninstrument app

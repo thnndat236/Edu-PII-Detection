@@ -11,6 +11,8 @@ from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 import time
 from datetime import datetime, timezone
+from transformers import pipeline
+from core.config import settings
 
 
 logging.basicConfig(
@@ -20,22 +22,39 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class ModelService:
-    def __init__(self, request: Request):
+    def __init__(self):
         self.tracer = trace.get_tracer(__name__)
-        
+        self.model_initialized = False
+        self._initialize_model()
+
+    def _initialize_model(self):
         with self.tracer.start_as_current_span("pii_model_initialization") as span:
             # Load PII NER pipeline
-            if not hasattr(request.app.state, "ner_pipeline"):
-                logger.error("NER pipeline not initialized")
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="NER pipeline is not initialized"
+            try:
+                self.ner_pipeline = pipeline(
+                    "ner",
+                    model=settings.MODEL_REPO_ID, 
+                    tokenizer=settings.MODEL_REPO_ID,
+                    aggregation_strategy="first" 
                 )
-            self.ner_pipeline = request.app.state.ner_pipeline
-            span.set_attribute("model.type", "pii_token_classification_pipeline")
-            span.set_attribute("model.initialization.success", True)
-            span.set_attribute("model.config.id2label", str(self.ner_pipeline.model.config.id2label))
-            span.set_attribute("model.config.label2id", str(self.ner_pipeline.model.config.label2id))
+                span.set_attribute("model.type", "pii_token_classification_pipeline")
+                span.set_attribute("model.initialization.success", True)
+                self.model_initialized = True
+                span.set_attribute("model.config.id2label", str(self.ner_pipeline.model.config.id2label))
+                span.set_attribute("model.config.label2id", str(self.ner_pipeline.model.config.label2id))
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR, str(e)))                
+                span.set_attribute("model.initialization.success", False)
+                self.model_initialized = False
+                logger.error(f"Error initializing NER Pipeline: {str(e)}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to initialize NER Pipeline: {str(e)}"
+                )
+
+    def is_ready(self) -> bool:
+        return self.model_initialized
 
     def detect_text(self, data: DetectRequest) -> DetectionResponse:
         with self.tracer.start_as_current_span("pii_detection") as span:
