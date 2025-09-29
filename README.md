@@ -68,17 +68,22 @@ Explore `prometheus-setting.md` for more information: [prometheus-setting.md](he
 1. Build the Docker Image based on instructions in the `Dockerfile`:
 
 ```bash
-docker build -t edu-pii-detection:v1.0 .
+# Build image with tag
+docker build -t qdawwn/edu-pii-detection:v1.0 .
 ```
 
 2. Tag and Push the Image to Docker Hub:
 
 ```bash
-docker tag edu-pii-detection:v1.0 qdawwn/edu-pii-detection:v1.0
+# Tag image as latest image
+docker tag qdawwn/edu-pii-detection:v1.0 qdawwn/edu-pii-detection:latest
 
+# Login to Docker
 docker login
 
+# Push image
 docker push qdawwn/edu-pii-detection:v1.0
+docker push qdawwn/edu-pii-detection:latest
 ```
 
 ## Create namespace `model-serving` and deploy application on GKE
