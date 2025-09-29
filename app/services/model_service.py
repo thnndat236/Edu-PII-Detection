@@ -76,6 +76,8 @@ class ModelService:
                 logger.info(f"Detected {len(entities)} entities in text")
                 return DetectionResponse(text=data.text, entities=entities)
             except HTTPException as e:
+                logger.exception(f"NER pipeline failed in pipeline: {str(e)}")
+                
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR), str(e.detail))
                 span.set_attribute("detection.success", False)
@@ -133,6 +135,8 @@ class ModelService:
                 return MaskResponse(original_text=data.text, masked_text=masked_text)
 
             except HTTPException as e:
+                logger.exception(f"Masking failed in pipeline: {str(e)}")
+                
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR), str(e.detail))
                 span.set_attribute("masking.success", False)
