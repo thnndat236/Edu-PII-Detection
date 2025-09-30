@@ -1,0 +1,10 @@
+apiVersion: v2
+name: edu-pii-detection
+description: A Helm chart for deploying the Education PII Detector
+version: 0.1.0
+appVersion: 0.1.0
+type: application
+
+maintainers:
+  - name: Le Thanh Dat
+    email: thnndat236@gmail.com
