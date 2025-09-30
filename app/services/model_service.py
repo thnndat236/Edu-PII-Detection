@@ -1,4 +1,4 @@
-from fastapi import Request, HTTPException, status
+from fastapi import HTTPException, status
 from api.models.schemas import (
     DetectRequest, 
     Entity, 
@@ -65,7 +65,7 @@ class ModelService:
             try:
                 if not data.text.strip():
                     span.set_attribute("detection.error", "empty_text")
-                    span.set_attribute("detection.error.expected", "more_than_one_character")
+                    span.set_attribute("detection.error.expected", "non_empty_string")
                     span.set_attribute("detection.error.actual", f"{data.text.strip()}_character")
                     span.set_status(Status(StatusCode.ERROR, "Invalid empty input text"))
                     raise HTTPException(
@@ -125,6 +125,8 @@ class ModelService:
             try:
                 if not data.text.strip():
                     span.set_attribute("masking.error", "empty_text")
+                    span.set_attribute("masking.error.expected", "non_empty_string")
+                    span.set_attribute("masking.error.actual", f"{len(data.text.strip())}_character")
                     span.set_status(Status(StatusCode.ERROR, "Invalid empty input text"))
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
