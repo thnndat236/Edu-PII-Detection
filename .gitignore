@@ -175,3 +175,5 @@ override.tf.json
 terraform.rc
 
 **/.terraform.lock.hcl
+
+gifted-object-467904-r0-jenkins-key.json
