@@ -12,6 +12,7 @@ from opentelemetry.trace import Status, StatusCode
 import time
 from datetime import datetime, timezone
 from transformers import pipeline
+import torch
 from core.config import settings
 
 
@@ -35,7 +36,9 @@ class ModelService:
                     "ner",
                     model=settings.MODEL_REPO_ID, 
                     tokenizer=settings.MODEL_REPO_ID,
-                    aggregation_strategy="first" 
+                    aggregation_strategy="first" ,
+                    device="cpu",
+                    torch_dtype=torch.float32
                 )
                 span.set_attribute("model.type", "pii_token_classification_pipeline")
                 span.set_attribute("model.initialization.success", True)
