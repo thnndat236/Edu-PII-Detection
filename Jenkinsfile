@@ -24,7 +24,7 @@ pipeline {
             }
 
             steps {
-                sh '''#!bin/bash
+                sh '''#!/bin/bash
                     set -e
 
                     echo 'Testing with coverage enforcement...'
